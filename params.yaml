@@ -3,7 +3,7 @@ pred_region: 'amhara'
 start_date: '2017-01-01'
 end_date: '2019-12-31'
 
-max_cloud_frac: 0.5
+max_cloud_frac: 0.3
 
 month_valid_start_day: 4
 month_valid_end_day: 26

@@ -31,7 +31,7 @@ class FeatureLayerGenerator():
         self.evi_annual_corrcoef = True
 
         self.evi_chirps_corrcoef = True
-        self.evi_chirps_rolling_corrcoef_perc = [1,5,10,25,75,90,95,99]
+        self.evi_chirps_rolling_corrcoef_perc = []
         
         self.evi_at_min_n_chirps = [6, 12, 18] # Half of the MODIS values
         
@@ -74,7 +74,7 @@ class FeatureLayerGenerator():
             for col in range(self.cols):
                 y1 = imagery_stack[0:12,  row, col]
                 y2 = imagery_stack[12:24, row, col]
-                y3 = self.evi_imagery_stack[24:36, row, col]
+                y3 = imagery_stack[24:36, row, col]
                     
                 annual_correlation_matrix = np.corrcoef(np.array([y1, y2, y3]))
                 annual_corrcoef_layer[0, row, col] = np.mean([annual_correlation_matrix[1,0],
@@ -222,11 +222,6 @@ class FeatureLayerGenerator():
         if self.evi_chirps_corrcoef:
             self.imagery_chirps_corrcoef_func(self.evi_imagery_stack, layer_name='evi')
             
-#         if len(self.evi_chirps_rolling_corrcoef_perc) > 0:
-#             self.imagery_chirps_rolling_corrcoef_func(self.evi_imagery_stack, 
-#                                                       self.evi_chirps_rolling_corrcoef_perc,
-#                                                      layer_name='evi')
-            
         if len(self.evi_at_min_n_chirps) > 0:
             self.imagery_at_min_chirps_func(self.evi_imagery_stack, self.evi_at_min_n_chirps, 
                                                layer_name='evi')
@@ -243,11 +238,7 @@ class FeatureLayerGenerator():
         if self.ndwi_chirps_corrcoef:
             self.imagery_chirps_corrcoef_func(self.ndwi_imagery_stack, layer_name='ndwi')
             
-#         if len(self.ndwi_chirps_rolling_corrcoef_perc) > 0:
-#             self.imagery_chirps_rolling_corrcoef_func(self.ndwi_imagery_stack, 
-#                                                       self.ndwi_chirps_rolling_corrcoef_perc,
-#                                                      layer_name='ndwi')
-            
+    
         if len(self.ndwi_at_min_n_chirps) > 0:
             self.imagery_at_min_chirps_func(self.ndwi_imagery_stack, self.ndwi_at_min_n_chirps,
                                                layer_name='ndwi')
@@ -255,9 +246,8 @@ class FeatureLayerGenerator():
         if self.evi_amap:
             self.create_amap(self.evi_imagery_stack, layer_name='evi')
             
-        
+        # Concatenate layers
         feature_stack = np.concatenate(self.feature_list, axis = 0).astype(np.float32)
         
-        print(feature_stack.shape)
         return feature_stack,  evi_max_min_ratio
     
