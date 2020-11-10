@@ -18,13 +18,12 @@ from mpl_toolkits.axes_grid1.anchored_artists import AnchoredSizeBar
 import matplotlib.font_manager as fm
 from rasterio.features import shapes
 import rasterio
-from descartes.patch import PolygonPatch
 from rasterio import Affine
 import fiona
 from fiona.crs import from_epsg
 
 from sentinel_imagery_generator import SentinelImageryGenerator
-from prediction_layer_generator import FeatureLayerGenerator
+from feature_layer_generator import FeatureLayerGenerator
 from utils import dilate, erode, vectorize
 
 fiona.supported_drivers['KML'] = 'rw'
@@ -166,8 +165,8 @@ if __name__ == '__main__':
   
         
     # Load a DL Tile from a lat and lon
-    lat = 12.8769
-    lon = 37.7894
+    lat = 8.48
+    lon = 39.24
     dltile = dl.scenes.geocontext.DLTile.from_latlon(lat, lon, resolution = 10, 
                                                      tilesize = 256, pad = 0)
     
