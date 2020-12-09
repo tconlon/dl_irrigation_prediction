@@ -6,9 +6,6 @@ from glob import glob
 
 import descarteslabs as dl
 from descarteslabs.scenes import SceneCollection
-from appsci_utils.regularization.spatiotemporal_denoise_stack import spatiotemporally_denoise
-from appsci_utils.file_io.geotiff import write_geotiff
-from appsci_utils.image_processing.coregistration import coregister_stack
 import random
 import datetime
 from tqdm import tqdm
@@ -22,7 +19,7 @@ from mpl_toolkits.axes_grid1.anchored_artists import AnchoredSizeBar
 import matplotlib.font_manager as fm
 
 
-class SentinelImageryGenerator():
+class RawImageryGenerator():
 
     def __init__(self, args, dltile):
         self.args = args
@@ -119,6 +116,7 @@ class SentinelImageryGenerator():
             # Fill masked array    
             masked_array[month_index] = masked_stack_median
                  
+        ## masked_array has size (36,256,256,2)        
         return masked_array 
 
 
@@ -211,7 +209,7 @@ class SentinelImageryGenerator():
         2: cropland
         '''
     
-        # Extract GFSAS scenes
+        # Extract GFSAD scenes
         gfsad_scenes, ctx = dl.scenes.search(
                 self.dltile,
                 products='usgs:gfsad30:global:v1',

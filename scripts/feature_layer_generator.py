@@ -6,16 +6,13 @@ from glob import glob
 
 import descarteslabs as dl
 from descarteslabs.scenes import SceneCollection
-from appsci_utils.regularization.spatiotemporal_denoise_stack import spatiotemporally_denoise
-from appsci_utils.file_io.geotiff import write_geotiff
-from appsci_utils.image_processing.coregistration import coregister_stack
 import random
 import datetime
 from tqdm import tqdm
 import matplotlib.pyplot as plt
 from scipy.interpolate import interp1d
 from scipy.signal import savgol_filter
-from pysptools.abundance_maps.amaps import UCLS, NNLS, FCLS
+# from pysptools.abundance_maps.amaps import UCLS, NNLS, FCLS
 
 
 class FeatureLayerGenerator():
