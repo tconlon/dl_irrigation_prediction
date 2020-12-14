@@ -9,11 +9,11 @@ from descarteslabs.scenes import SceneCollection
 from descarteslabs.scenes.geocontext import AOI, DLTile
 import shapely
 from shapely.geometry import MultiPolygon 
-from main import get_args, load_model_and_norm, predict_for_tile
-from raw_imagery_generator import RawImageryGenerator
+from scripts.main import get_args, load_model_and_norm, predict_for_tile
+from scripts.raw_imagery_generator import RawImageryGenerator
 from descarteslabs.catalog import Product, Image, OverviewResampler
-from feature_layer_generator import FeatureLayerGenerator
-from utils import (save_model_to_dlstorage, save_normalization_to_dlstorage, 
+from scripts.feature_layer_generator import FeatureLayerGenerator
+from scripts.utils import (save_model_to_dlstorage, save_normalization_to_dlstorage, 
                    load_model_from_dlstorage, load_normalization_from_dlstorage,
                   compile_model_clean_standardization, dotdict)
 
@@ -90,10 +90,12 @@ def deploy_feature_creation(args, dltile_key):
     import descarteslabs as dl
     import os
     from descarteslabs.catalog import Product, Image, OverviewResampler
-    from scripts.raw_imagery_generator import RawImageryGenerator
-    from scripts.feature_layer_generator import FeatureLayerGenerator
+    from raw_imagery_generator import RawImageryGenerator
+    from feature_layer_generator import FeatureLayerGenerator
 
     dltile = dl.scenes.DLTile.from_key(dltile_key)    
+    
+    
     
     generator = RawImageryGenerator(args, dltile)
 
@@ -151,12 +153,13 @@ def deploy_on_tasks():
     tasks = dl.Tasks()
     async_predict = tasks.create_function(
         f=deploy_feature_creation,
-        name='veg_prediction-deploy',
+        name='veg_features-deploy',
         image=docker_image,
         maximum_concurrency=500,
         memory="3Gi",
-        include_modules = ['scripts'],
-#         requirements = ['scipy==1.4.1',  'pyfftw==0.12.0']
+        include_modules = ['raw_imagery_generator',
+                          'feature_layer_generator'],
+        requirements = ['tqdm']
     )
     
     return async_predict
@@ -180,8 +183,11 @@ if __name__ == '__main__':
     async_predict = deploy_on_tasks()
 
     
-    for tile in dltiles_list[0:5]:
-        print(tile.key)
+    print(args.start_date)
+    
+    for tile in dltiles_list[4::]:
+#         deploy_feature_creation(args, tile.key)
+        
         async_predict(args, tile.key)
     
     

@@ -22,14 +22,14 @@ from rasterio import Affine
 import fiona
 from fiona.crs import from_epsg
 
-from raw_imagery_generator import RawImageryGenerator
-from feature_layer_generator import FeatureLayerGenerator
-from utils import dilate, erode, vectorize
+from .raw_imagery_generator import RawImageryGenerator
+from .feature_layer_generator import FeatureLayerGenerator
+from .utils import dilate, erode, vectorize
 
 fiona.supported_drivers['KML'] = 'rw'
 fiona.supported_drivers['LIBKML'] = 'rw'
  
-
+    
 def get_args():
     parser = argparse.ArgumentParser(
         description= 'Predict irrigation presence using Sentinel imagery')
@@ -51,7 +51,7 @@ def load_model_and_norm(args):
     Load pretrained model and normaliziation array. Compile and return.
     '''
     
-    model = load_model(f'pretrained_models/models/{args.model_filename}')
+    model = load_model(f'../pretrained_models/models/{args.model_filename}')
     model_optimizer = tf.keras.optimizers.Adam(2e-5, beta_1=0.5)
 
     model.compile(model_optimizer)

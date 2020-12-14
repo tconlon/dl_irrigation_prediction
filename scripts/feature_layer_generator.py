@@ -8,16 +8,21 @@ import descarteslabs as dl
 from descarteslabs.scenes import SceneCollection
 import random
 import datetime
-from tqdm import tqdm
-import matplotlib.pyplot as plt
 from scipy.interpolate import interp1d
 from scipy.signal import savgol_filter
 # from pysptools.abundance_maps.amaps import UCLS, NNLS, FCLS
 
+class dotdict(dict):
+    """dot.notation access to dictionary attributes"""
+    __getattr__ = dict.get
+    __setattr__ = dict.__setitem__
+    __delattr__ = dict.__delitem__
 
 class FeatureLayerGenerator():
 
     def __init__(self, args, sentinel_imagery_stack, chirps_array, srtm_layer, gfsad_layer):
+        
+        args = dotdict(args)
         
         self.args = args
         
@@ -67,7 +72,7 @@ class FeatureLayerGenerator():
     def annual_corrcoef_func(self, imagery_stack, layer_name):
         print('Create annual correlation coefficient layer')
         annual_corrcoef_layer = np.zeros((1, self.rows, self.cols))
-        for row in tqdm(range(self.rows)):
+        for row in range(self.rows):
             for col in range(self.cols):
                 y1 = imagery_stack[0:12,  row, col]
                 y2 = imagery_stack[12:24, row, col]
@@ -88,7 +93,7 @@ class FeatureLayerGenerator():
         elif layer_name == 'ndwi':
             chirps_array = self.chirps_array
         
-        for row in tqdm(range(self.rows)):
+        for row in range(self.rows):
             for col in range(self.cols):
                 imagery_chirps_coeff = np.corrcoef(imagery_stack[:,row, col],
                                                    chirps_array)
@@ -108,7 +113,7 @@ class FeatureLayerGenerator():
             
         chirps_rolling = self.rolling_window(chirps_array, self.window_size)
 
-        for row in tqdm(range(self.rows)):
+        for row in range(self.rows):
             for col in range(self.cols):
                 a = imagery_stack[:,row, col]
                 a_rolling = self.rolling_window(a, self.window_size)
@@ -137,7 +142,7 @@ class FeatureLayerGenerator():
             
         sorted_indices = chirps_array.argsort()
         
-        for row in tqdm(range(self.rows)):
+        for row in range(self.rows):
             for col in range(self.cols):
                 imagery_ts = imagery_stack[:,row, col]
                 for ix, n in enumerate(min_n_chirps_vals):
@@ -179,7 +184,7 @@ class FeatureLayerGenerator():
         
         amap = np.zeros((4, self.rows, self.cols))
                 
-        for row in tqdm(range(self.rows)):
+        for row in range(self.rows):
             for col in range(self.cols):
                 imagery_ts = imagery_stack[:,row, col][None,...]
                 tEMs_coeff = NNLS(imagery_ts, tEMs)

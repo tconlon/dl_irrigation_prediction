@@ -197,3 +197,69 @@ def compile_model_clean_standardization(args, model, std_metrics):
     norm_stds  = [float(i) for i in std_metrics[f'{args.pred_region}_standard_array'].iloc[1].strip('[] ').split(',')]
     
     return model, np.array(norm_means), np.array(norm_stds)
+
+def find_feature_layers_and_standardize(dltile_key, norm_means, norm_stds):
+    import descarteslabs as dl
+    import numpy as np
+    
+    print('Find feature layers')
+    dltile = dl.scenes.DLTile.from_key(dltile_key)
+
+    dl_scenes, ctx = dl.scenes.search(
+            dltile,
+            products='columbia_sel:dry_crop_feats',
+            start_datetime='2019-12-31',
+            end_datetime='2020-01-02',
+            limit=None,
+    )
+
+    bands_to_extract = ['srtm', 'evi_annual_corrcoef', 'evi_chirps_corrcoef',
+                        'evi_at_min_12_chirps_mean', 'evi_at_min_24_chirps_mean', 
+                        'evi_at_min_36_chirps_mean', 'evi_at_min_12_chirps_max', 
+                        'evi_at_min_24_chirps_max', 'evi_at_min_36_chirps_max',
+                        'evi_max_min_ratio_95_5', 'evi_max_min_ratio_90_10', 
+                        'evi_max_min_ratio_85_15', 'evi_max_min_ratio_80_20',
+                        'ndwi_annual_corrcoef', 'ndwi_chirps_corrcoef',
+                        'ndwi_at_min_12_chirps_mean', 'ndwi_at_min_24_chirps_mean', 
+                        'ndwi_at_min_36_chirps_mean', 'ndwi_at_min_12_chirps_max', 
+                        'ndwi_at_min_24_chirps_max', 'ndwi_at_min_36_chirps_max',]
+
+
+    feature_layers = dl_scenes.mosaic(bands=bands_to_extract,
+                                      ctx=ctx)
+
+    feature_layers = np.transpose(feature_layers, (1,2,0))
+    feature_layers = np.reshape(feature_layers, (feature_layers.shape[0]*feature_layers.shape[1],
+                                                feature_layers.shape[2]))
+
+    feature_layers = (feature_layers - norm_means)/norm_stds
+
+
+    return feature_layers
+    
+def predict_function(model, norm_means, norm_stds, dltile_key):
+    import descarteslabs as dl
+    import tensorflow as tf
+    import numpy as np
+
+    dltile = dl.scenes.DLTile.from_key(dltile_key)
+
+    feature_layers = find_feature_layers_and_standardize(dltile_key, norm_means, norm_stds)
+    feature_layers = np.expand_dims(feature_layers, axis = 1)
+
+    feature_stack_ds = tf.data.Dataset.from_tensor_slices(feature_layers).batch(256)
+    predictions_list = []
+
+    print('Predict over DLTile')
+    for features in feature_stack_ds:
+        predictions = model(features, training=False)
+        predictions = tf.squeeze(predictions, axis=1)
+        predictions = predictions[:,1]
+        #predictions = tf.argmax(predictions, axis=1)
+        predictions_list.extend(predictions.numpy())
+
+
+    predictions_over_tile = np.reshape(np.array(predictions_list), (1, dltile.tilesize,
+                                                                   dltile.tilesize))
+
+    return predictions_over_tile
