@@ -2,7 +2,7 @@
 Predicting irrigation presence using the Descartes Labs platform.
 
 ## Overview
-This repository contains the code necesssary to deploy a pretrained binary classification model to predict irrigation presence. The classification model uses layers derived from Sentinel-2 imagery and CHIRPS rainfall predictions for prediction; a combination of SRTM DEM measurements and GFSAS Land Cover classifications are used to filter these predictions. After basic morphological cleaning, the predictions are plotted, polygonized, and saved as KML files (for visual inspection in Google Earth Pro). 
+This repository contains the code necesssary to deploy a pretrained binary classification model to predict irrigation presence. The classification model uses layers derived from Sentinel-2 imagery and CHIRPS rainfall predictions, SRTM DEM measurements, and GFSAS land cover classifications for prediction. After basic morphological cleaning, the predictions are plotted, polygonized, and saved as KML files (for visual inspection in Google Earth Pro). 
 
 The repository consists of 4 scripts and a parameters file. These files are as follows:
 

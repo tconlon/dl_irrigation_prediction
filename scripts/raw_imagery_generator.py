@@ -1,33 +1,33 @@
 import numpy as np
 import logging; logging.getLogger().setLevel(logging.INFO); logging.captureWarnings(True)
 import sys, os
-from tqdm import tqdm
 from glob import glob
-
 import descarteslabs as dl
 from descarteslabs.scenes import SceneCollection
-from appsci_utils.regularization.spatiotemporal_denoise_stack import spatiotemporally_denoise
-from appsci_utils.file_io.geotiff import write_geotiff
-from appsci_utils.image_processing.coregistration import coregister_stack
 import random
 import datetime
-from tqdm import tqdm
 import matplotlib.pyplot as plt
 from scipy.interpolate import interp1d
 from scipy.signal import savgol_filter
 
 from dateutil.rrule import rrule, MONTHLY
-from matplotlib import pyplot as plt
-from mpl_toolkits.axes_grid1.anchored_artists import AnchoredSizeBar
-import matplotlib.font_manager as fm
 
 
-class SentinelImageryGenerator():
+class dotdict(dict):
+    """dot.notation access to dictionary attributes"""
+    __getattr__ = dict.get
+    __setattr__ = dict.__setitem__
+    __delattr__ = dict.__delitem__
+
+class RawImageryGenerator():
 
     def __init__(self, args, dltile):
+        
+        args = dotdict(args)
+        
         self.args = args
         
-        self.start_date = args.start_date
+        self.start_date = self.args.start_date
         self.end_date = args.end_date
         self.dltile = dltile
         self.max_cloud_frac = args.max_cloud_frac
@@ -89,7 +89,7 @@ class SentinelImageryGenerator():
         masked_array = np.ma.masked_all((len(date_tuples), self.dltile.tilesize, 
                                          self.dltile.tilesize, 2))    
             
-        
+        print('Collect raw Sentinel-2 imagery')
         for  dt_tuple, month_scenes in s2_scenes:
             
             # Extract month and year
@@ -119,6 +119,7 @@ class SentinelImageryGenerator():
             # Fill masked array    
             masked_array[month_index] = masked_stack_median
                  
+        ## masked_array has size (36,256,256,2)        
         return masked_array 
 
 
@@ -211,7 +212,7 @@ class SentinelImageryGenerator():
         2: cropland
         '''
     
-        # Extract GFSAS scenes
+        # Extract GFSAD scenes
         gfsad_scenes, ctx = dl.scenes.search(
                 self.dltile,
                 products='usgs:gfsad30:global:v1',

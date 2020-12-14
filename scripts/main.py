@@ -22,13 +22,14 @@ from rasterio import Affine
 import fiona
 from fiona.crs import from_epsg
 
-from sentinel_imagery_generator import SentinelImageryGenerator
-from feature_layer_generator import FeatureLayerGenerator
-from utils import dilate, erode, vectorize
+from .raw_imagery_generator import RawImageryGenerator
+from .feature_layer_generator import FeatureLayerGenerator
+from .utils import dilate, erode, vectorize
 
 fiona.supported_drivers['KML'] = 'rw'
+fiona.supported_drivers['LIBKML'] = 'rw'
  
-
+    
 def get_args():
     parser = argparse.ArgumentParser(
         description= 'Predict irrigation presence using Sentinel imagery')
@@ -50,7 +51,7 @@ def load_model_and_norm(args):
     Load pretrained model and normaliziation array. Compile and return.
     '''
     
-    model = load_model(f'pretrained_models/models/{args.model_filename}')
+    model = load_model(f'../pretrained_models/models/{args.model_filename}')
     model_optimizer = tf.keras.optimizers.Adam(2e-5, beta_1=0.5)
 
     model.compile(model_optimizer)
@@ -63,7 +64,7 @@ def load_model_and_norm(args):
 
 
 
-def predict_for_tile(args, model, norm_means, norm_stds, feature_stack, valid_pixels, dltile):
+def predict_for_tile(args, model, norm_means, norm_stds, generator, feature_stack, valid_pixels, dltile):
     '''
     Predict irrigation presence over a specific DL Tile.
     '''    
@@ -159,19 +160,18 @@ if __name__ == '__main__':
     model, norm_means, norm_stds = load_model_and_norm(args)
     
     # Specify the DL Tile if you have the particular key
-#     dltile_key = '256:0:10.0:37:39:437'
+#     dltile_key = '256:0:10.0:37:9:366'
 #     dltile = dl.scenes.geocontext.DLTile.from_key(dltile_key)
-#     print(dltile.geometry.centroid)
   
         
     # Load a DL Tile from a lat and lon
-    lat = 8.48
-    lon = 39.24
-    dltile = dl.scenes.geocontext.DLTile.from_latlon(lat, lon, resolution = 10, 
-                                                     tilesize = 256, pad = 0)
+    lat = 11.82
+    lon = 39.36
+    dltile = dl.scenes.geocontext.DLTile.from_latlon(lat, lon, resolution=10, 
+                                                     tilesize=256, pad=0)
     
     # Create a sentinel timeseries generator object
-    generator = SentinelImageryGenerator(args, dltile)
+    generator = RawImageryGenerator(args, dltile)
     
     
     # Retrieve Sentinel imagery, interpolate and smooth
@@ -224,6 +224,6 @@ if __name__ == '__main__':
     valid_pixels = feature_generator.return_valid_pixels(evi_max_min_ratio)
     
     # Predict over the DL tile
-    predict_for_tile(args, model, norm_means, norm_stds, feature_stack, valid_pixels, dltile)
+    predict_for_tile(args, model, norm_means, norm_stds, generator, feature_stack, valid_pixels, dltile)
    
     
