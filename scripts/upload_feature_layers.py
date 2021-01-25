@@ -22,12 +22,14 @@ from scripts.utils import (save_model_to_dlstorage, save_normalization_to_dlstor
 
 def load_polygons():
     folder_dir = '../data/raw_data/shapefiles/shapefiles_for_model_testing'
-    irrig_polys = ['dabat_irrig_polygons.geojson',
+    irrig_polys = [
+#                   'dabat_irrig_polygons.geojson',
                   'fincha_irrig_polygons.geojson',
                   'kobo_irrig_polygons.geojson',
                   'rift_irrig_polygons.geojson']
     
-    noirrig_polys = ['dabat_noirrig_polygons.geojson',
+    noirrig_polys = [
+#                   'dabat_noirrig_polygons.geojson',
                   'fincha_noirrig_polygons.geojson',
                   'kobo_noirrig_polygons.geojson',
                   'rift_noirrig_polygons.geojson']
@@ -47,11 +49,23 @@ def load_polygons():
     
     return irrig_poly_list, noirrig_poly_list
 
-def load_single_polygon():
-    poly_path = '../data/raw_data/shapefiles/shapefiles_for_model_testing/gondar_large_polygon.geojson'
-    poly = gpd.read_file(poly_path).to_crs('EPSG:4326')
+def load_large_polygons():
+    poly_dir = '../data/raw_data/shapefiles/shapefiles_for_model_testing/large_polys_for_dl_upload'
     
-    return poly['geometry']
+    polys_paths = [ f'{poly_dir}/gondar.geojson',
+                    f'{poly_dir}/rift.geojson',                   
+                    f'{poly_dir}/fincha.geojson',
+                    f'{poly_dir}/kobo_irrig.geojson',
+                    f'{poly_dir}/kobo_noirrig.geojson',
+                  ]
+                   
+    poly_list = []
+    
+    for file in polys_paths:
+        poly = gpd.read_file(file).to_crs('EPSG:4326')
+        poly_list.extend(poly['geometry'])
+    
+    return poly_list
     
 
 def find_total_area(irrig_poly_list, noirrig_poly_list):
@@ -171,23 +185,23 @@ if __name__ == '__main__':
     args = get_args()
     args = dotdict(vars(args))
     
-    gondar_poly = load_single_polygon()
-
-    dltiles_list = find_aois_by_tile([gondar_poly])
+#     polys_for_upload = load_large_polygons()
+#     dltiles_list = find_aois_by_tile(polys_for_upload)
+    
+    poly_file = '../data/raw_data/shapefiles/shapefiles_for_viz/rift_box_for_sentinel_eval.geojson'
+    poly = gpd.read_file(poly_file).to_crs('EPSG:4326')
+    dltiles_list = DLTile.from_shape(poly, resolution=10, tilesize=256, pad=0)
     
     print(len(dltiles_list))
-
+    
+    
     docker_image = 'us.gcr.io/dl-ci-cd/images/tasks/public/py3.8:v2020.09.22-5-ga6b4e5fa'
     
     tasks = dl.Tasks()
     async_predict = deploy_on_tasks()
 
-    
-    print(args.start_date)
-    
-    for tile in dltiles_list[4::]:
-#         deploy_feature_creation(args, tile.key)
         
+    for tile in dltiles_list:        
         async_predict(args, tile.key)
     
     

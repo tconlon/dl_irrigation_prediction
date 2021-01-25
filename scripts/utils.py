@@ -99,13 +99,14 @@ def save_model_to_dlstorage():
     import shutil
     import descarteslabs as dl
     
-    model_name = 'best_trained_all_regions'
+    model_name = '20201217-141812_allregions'
+    
+#     auth = dl.Auth()
     
     dir_name = f'../pretrained_models/models/{model_name}'
     output_filename = model_name
     shutil.make_archive(model_name, 'zip', dir_name)
-    
-   
+       
     print(f'Upload model to DL Storage: {model_name}')
     storage = dl.Storage()
     storage.set_file(model_name, f'{model_name}.zip')
@@ -130,7 +131,7 @@ def save_normalization_to_dlstorage():
 
    
         
-def load_model_from_dlstorage():
+def load_model_from_dlstorage(storage_key):
     '''
     Load TF model from DL.Storage
     '''
@@ -141,25 +142,28 @@ def load_model_from_dlstorage():
     import os
     import subprocess
     
-    storage_key = 'best_trained_all_regions'
-
-    try: 
-        model_zip = tempfile.NamedTemporaryFile()
-        model_dir = tempfile.TemporaryDirectory()
-        
-        dl.Storage().get_file(storage_key, model_zip.name)
-         
-        unzip = f'unzip {model_zip.name} -d {model_dir.name}'
-        resp = os.system(unzip)
-
-        model = load_model(model_dir.name)
-        model_zip.close()
-        model_dir.cleanup()
-
-        return model
+#     storage_key = 'best_trained_all_regions'
     
-    except:
-        print("Model not available in DL Storage")
+#     auth = dl.Auth()
+#     print(auth.payload)
+
+
+    model_zip = tempfile.NamedTemporaryFile()
+    model_dir = tempfile.TemporaryDirectory()
+
+    dl.Storage().get_file(storage_key, model_zip.name)
+
+    unzip = f'unzip {model_zip.name} -d {model_dir.name}'
+    resp = os.system(unzip)
+
+    model = load_model(model_dir.name)
+    model_zip.close()
+    model_dir.cleanup()
+
+    return model
+    
+#     except:
+#         print("Model not available in DL Storage")
 
     
 
@@ -263,3 +267,7 @@ def predict_function(model, norm_means, norm_stds, dltile_key):
                                                                    dltile.tilesize))
 
     return predictions_over_tile
+
+
+if __name__ == '__main__':
+    save_model_to_dlstorage()

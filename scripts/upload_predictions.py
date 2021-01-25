@@ -13,7 +13,7 @@ from shapely.geometry import MultiPolygon
 from scripts.main import get_args, load_model_and_norm, predict_for_tile
 from scripts.raw_imagery_generator import RawImageryGenerator
 from descarteslabs.catalog import Product, Image, OverviewResampler
-from upload_feature_layers import load_single_polygon, find_aois_by_tile
+from upload_feature_layers import load_large_polygons, find_aois_by_tile
 from feature_layer_generator import FeatureLayerGenerator
 from utils import (save_model_to_dlstorage, save_normalization_to_dlstorage, 
                    load_model_from_dlstorage, load_normalization_from_dlstorage,
@@ -91,12 +91,13 @@ def deploy_predictions(args, dltile_key):
                       compile_model_clean_standardization, predict_function,
                       find_feature_layers_and_standardize, dotdict)
 
-#     import predict_function, find_feature_layers_and_standardize
     
     args = dotdict(args)
     
     ## Load in model and normalizations
-    model = load_model_from_dlstorage()
+    model_storage_key = '20201223-112453_amharaonly'
+    
+    model = load_model_from_dlstorage(model_storage_key)
     std_metrics = load_normalization_from_dlstorage()
     model, norm_means, norm_stds = compile_model_clean_standardization(args, model, std_metrics)
     dltile = dl.scenes.DLTile.from_key(dltile_key)    
@@ -107,7 +108,7 @@ def deploy_predictions(args, dltile_key):
     upload = True
     if upload:
         print('Upload to catalog')
-        pid = 'dry_season_crop_model_preds'
+        pid = f'dspc_preds_model_{model_storage_key}'
         auth = dl.Auth()
         pid = f"{auth.payload['org']}:{pid}"
         product = Product.get(pid)
@@ -116,7 +117,7 @@ def deploy_predictions(args, dltile_key):
 
         img_id = f"{pid}:{img_name}"
         image = Image(product=product, name=img_name, id=img_id)
-        image.acquired = '2020-01-01'
+        image.acquired = '2020-01-15'
         image.geotrans = dltile.geotrans
         image.cs_code = dltile.crs
 
@@ -158,15 +159,21 @@ if __name__ == '__main__':
     args = get_args()
     args = dotdict(vars(args))
 
-    dltile_key = '256:0:10.0:37:-66:542'
     
+#     poly_list = load_large_polygons()
+#     dltiles_list = find_aois_by_tile(poly_list)
     
-    gondar_poly = load_single_polygon()
-    dltiles_list = find_aois_by_tile([gondar_poly])
+    poly_file = '../data/raw_data/shapefiles/shapefiles_for_viz/rift_box_for_sentinel_eval.geojson'
+    poly = gpd.read_file(poly_file).to_crs('EPSG:4326')
+    dltiles_list = DLTile.from_shape(poly, resolution=10, tilesize=256, pad=0)
     
     print(len(dltiles_list))
     
+    deploy_predictions(args, dltiles_list[0].key)
+        
     async_predict = deploy_on_tasks(args)
     
-    for dltile in dltiles_list[4::]:
+    for dltile in dltiles_list:
         async_predict(args, dltile.key)
+
+    
