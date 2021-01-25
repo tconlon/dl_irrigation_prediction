@@ -23,7 +23,7 @@ class RawImageryGenerator():
 
     def __init__(self, args, dltile):
         
-        args = dotdict(args)
+        args = dotdict(vars(args))
         
         self.args = args
         

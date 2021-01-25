@@ -22,9 +22,9 @@ from rasterio import Affine
 import fiona
 from fiona.crs import from_epsg
 
-from .raw_imagery_generator import RawImageryGenerator
-from .feature_layer_generator import FeatureLayerGenerator
-from .utils import dilate, erode, vectorize
+from raw_imagery_generator import RawImageryGenerator
+from feature_layer_generator import FeatureLayerGenerator
+from utils import dilate, erode, vectorize
 
 fiona.supported_drivers['KML'] = 'rw'
 fiona.supported_drivers['LIBKML'] = 'rw'
@@ -51,12 +51,12 @@ def load_model_and_norm(args):
     Load pretrained model and normaliziation array. Compile and return.
     '''
     
-    model = load_model(f'../pretrained_models/models/{args.model_filename}')
+    model = load_model(f'{args.base_dir}/pretrained_models/models/{args.model_filename}')
     model_optimizer = tf.keras.optimizers.Adam(2e-5, beta_1=0.5)
 
     model.compile(model_optimizer)
     
-    norm_array = pd.read_csv(f'pretrained_models/normalization_arrays/{args.norm_filename}.csv', index_col=0)
+    norm_array = pd.read_csv(f'{args.base_dir}/pretrained_models/normalization_arrays/{args.norm_filename}.csv', index_col=0)
     norm_means = [float(i) for i in norm_array[f'{args.pred_region}_standard_array'].iloc[0].strip('[] ').split(',')]
     norm_stds  = [float(i) for i in norm_array[f'{args.pred_region}_standard_array'].iloc[1].strip('[] ').split(',')]
     
@@ -71,7 +71,7 @@ def predict_for_tile(args, model, norm_means, norm_stds, generator, feature_stac
     
     # Create file save string and folder
     dltile_key = dltile.key.replace(':', '_')
-    pred_folder = f'predictions/{dltile_key}'
+    pred_folder = f'{args.base_dir}/predictions/{dltile_key}'
     if not os.path.exists(pred_folder):
         os.mkdir(pred_folder)
     
@@ -175,7 +175,7 @@ if __name__ == '__main__':
     
     
     # Retrieve Sentinel imagery, interpolate and smooth
-    sentinel_file_name = f'data/raw_data/imagery_stacks/sentinel_{dltile.key}.npy'
+    sentinel_file_name = f'{args.base_dir}/data/raw_data/imagery_stacks/sentinel_{dltile.key}.npy'
     
     # Collect Sentinel timeseries stack if you haven't already saved it.
     if not os.path.exists(sentinel_file_name):
@@ -205,8 +205,8 @@ if __name__ == '__main__':
                                               gfsad_layer)
     
     # Define feature stack names
-    feature_stack_file_name = f'data/processed_data/feature_layers/features_{dltile.key}.npy'
-    ratio_file_name = f'data/processed_data/evi_max_min_ratio_layers/ratio_{dltile.key}.npy'    
+    feature_stack_file_name = f'{args.base_dir}/data/processed_data/feature_layers/features_{dltile.key}.npy'
+    ratio_file_name = f'{args.base_dir}/data/processed_data/evi_max_min_ratio_layers/ratio_{dltile.key}.npy'    
     force_feature_stack_dl = True
     
     # If these files don't exist, create them

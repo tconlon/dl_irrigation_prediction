@@ -22,7 +22,7 @@ class FeatureLayerGenerator():
 
     def __init__(self, args, sentinel_imagery_stack, chirps_array, srtm_layer, gfsad_layer):
         
-        args = dotdict(args)
+        args = dotdict(vars(args))
         
         self.args = args
         
